@@ -3,7 +3,9 @@ package com.fdmgroup.tdd.calculator;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -148,7 +150,7 @@ class CalculatorTest {
 		String[] symbols = {"-","+","-","-","-","*","/"};
 		String[] expected = {"-","+","-","-","*","/"};
 		int index = 3;
-		assertArrayEquals(expected, calc.reconstructSymbolsArray(symbols, index));
+		assertArrayEquals(expected, calc.reconstructSymbolsArray(symbols, index, index));
 	}
 	
 	@Test
@@ -156,7 +158,7 @@ class CalculatorTest {
 		String[] symbols = {"-","+","-","-","-","*","/"};
 		String[] expected = {"-","+","-","-","-","*"};
 		int index = symbols.length - 1;
-		assertArrayEquals(expected, calc.reconstructSymbolsArray(symbols, index));
+		assertArrayEquals(expected, calc.reconstructSymbolsArray(symbols, index, index));
 	}
 	
 	@Test
@@ -164,7 +166,7 @@ class CalculatorTest {
 		String[] symbols = {"-","+","-","-","-","*","/"};
 		String[] expected = {"+","-","-","-","*","/"};
 		int index = 0;
-		assertArrayEquals(expected, calc.reconstructSymbolsArray(symbols, index));
+		assertArrayEquals(expected, calc.reconstructSymbolsArray(symbols, index, index));
 	}
 	
 	@Test
@@ -173,7 +175,7 @@ class CalculatorTest {
 		String[] expected = {"(2","2.0)","1","5","6"};
 		int index = 3;
 		String numberToInsert = "5";
-		assertArrayEquals(expected, calc.reconstructNumbersArray(symbols, index, numberToInsert));
+		assertArrayEquals(expected, calc.reconstructNumbersArray(symbols, index, index + 1, numberToInsert));
 	}
 	
 	@Test
@@ -182,7 +184,7 @@ class CalculatorTest {
 		String[] expected = {"4.0","1","2","3","6"};
 		int index = 0;
 		String numberToInsert = "4.0";
-		assertArrayEquals(expected, calc.reconstructNumbersArray(symbols, index, numberToInsert));
+		assertArrayEquals(expected, calc.reconstructNumbersArray(symbols, index, index + 1,numberToInsert));
 	}
 	
 	@Test
@@ -191,7 +193,7 @@ class CalculatorTest {
 		String[] expected = {"(2","2.0)","1","2","3","-1"};
 		int index = symbols.length - 1;
 		String numberToInsert = "-1";
-		assertArrayEquals(expected, calc.reconstructNumbersArray(symbols, index, numberToInsert));
+		assertArrayEquals(expected, calc.reconstructNumbersArray(symbols, index, index + 1, numberToInsert));
 	}
 	
 	@Test
@@ -200,7 +202,7 @@ class CalculatorTest {
 		String[] expected = {"(2","2.0)","1","2","9"};
 		int index = symbols.length - 2;
 		String numberToInsert = "9";
-		assertArrayEquals(expected, calc.reconstructNumbersArray(symbols, index, numberToInsert));
+		assertArrayEquals(expected, calc.reconstructNumbersArray(symbols, index, index + 1, numberToInsert));
 	}
 	
 	@Test
@@ -412,5 +414,84 @@ class CalculatorTest {
 		double expected = 1.4028505520067;
 		assertEquals(expected, calc.root(base, n, 1), precision);
 	}
+	
+	@Test
+	void getBracketIndices_LeftIs4_3_2_1_0_Expression() {
+		String expression = "(1+(1o(1o(1oP(1+)Po)+1)o1)o1)";
+		int[] expectedLeft = {4,3,2,1,0};
+		List<Integer> leftBrackets = new ArrayList<Integer>();
+		
+		String[] numbers = calc.getNumbers(expression);
+		System.out.print("\n");
+		calc.getLeftBracketIndices(numbers, leftBrackets, numbers.length - 1);
+		int[] leftBracketsArray = leftBrackets.stream().mapToInt(i->i).toArray();
+	
+		assertArrayEquals(expectedLeft, leftBracketsArray);
+	}
+	
+	@Test
+	void getBracketIndices_LeftIs2_1_0_Expression() {
+		String expression = "(1+(1*(1)*1)+1)";
+		int[] expectedLeft = {2,1,0};
+		List<Integer> leftBrackets = new ArrayList<Integer>();
+		
+		String[] numbers = calc.getNumbers(expression);
+		calc.getLeftBracketIndices(numbers, leftBrackets, numbers.length - 1);
+		int[] leftBracketsArray = leftBrackets.stream().mapToInt(i->i).toArray();
 
+		assertArrayEquals(expectedLeft, leftBracketsArray);
+	}
+	
+	@Test
+	void getBracketIndices_LeftIs6_4_2_0_Expression() {
+		String expression = "(1+1)+(2-2)-(3*3)*(4/4)";
+		int[] expectedLeft = {6,4,2,0};
+		List<Integer> leftBrackets = new ArrayList<Integer>();
+		
+		String[] numbers = calc.getNumbers(expression);
+		calc.getLeftBracketIndices(numbers, leftBrackets, numbers.length - 1);
+		int[] leftBracketsArray = leftBrackets.stream().mapToInt(i->i).toArray();
+		
+		assertArrayEquals(expectedLeft, leftBracketsArray);
+	}
+	
+	@Test
+	void getBracketIndices_LeftIs5_4_1_0_Expression() {
+		String expression = "(1+(2-2)*1)/(3**(4^4)+3)";
+		int[] expectedLeft = {5,4,1,0};
+		List<Integer> leftBrackets = new ArrayList<Integer>();
+		
+		String[] numbers = calc.getNumbers(expression);
+		calc.getLeftBracketIndices(numbers, leftBrackets, numbers.length - 1);
+		int[] leftBracketsArray = leftBrackets.stream().mapToInt(i->i).toArray();
+		assertArrayEquals(expectedLeft, leftBracketsArray);
+	}
+	
+	@Test
+	void evaluate_ResultIs40_10TimesBracket2Plus2() {
+		String expression = "10*(2+2)";
+		double expected = 40;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs30_2TimesBracket1Plus3Times4BracketPlus4() {
+		String expression = "2*(1+3*4)+4";
+		double expected = 30;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs56_Bracket2Plus2BracketPlusBracket2Times2BracketTimesBracket1Plus3Times4() {
+		String expression = "(2+2)+(2*2)*(1+3*4)";
+		double expected = 56;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs256_Bracket2TimesBracket2Plus2BracketTimes2BracketPow2() {
+		String expression = "(2*(2+2)*2)**2";
+		double expected = 256;
+		assertEquals(expected, calc.evaluate(expression));
+	}
 }

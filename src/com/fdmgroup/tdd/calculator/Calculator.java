@@ -3,14 +3,15 @@ package com.fdmgroup.tdd.calculator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Calculator implements ICalculator{
 	private final String symbolRegex = "[^()0-9\\.]+";
 	private final String numRegex = "[()0-9\\.]+";
 	private final String spaceRegex = "\\s";
 	private final double precision = 0.0000000000001;
+	private List<Integer> leftBrackets = new ArrayList<Integer>();
+	private boolean bracketsListSet = false;
+	private boolean evaluatingBracket = false;
 	
 	/**
 	 * 
@@ -133,6 +134,28 @@ public class Calculator implements ICalculator{
 		String [] symbolsArray = fromFirstSymbol.split(numRegex);
 		
 		return symbolsArray;
+	}
+	
+	public void getLeftBracketIndices(String[] numbers, List<Integer> leftBrackets, int fromRear){
+		String number = numbers[fromRear];
+		int indexOfLeftBracket = number.indexOf('(');
+		
+		if(indexOfLeftBracket != -1) {
+			leftBrackets.add(fromRear);
+		}
+		if(fromRear >= 1) {
+			getLeftBracketIndices(numbers, leftBrackets, fromRear - 1);			
+		}
+	}
+	
+	public int getRightBracketIndex(String[] numbers, int startFrom) {
+		String number = numbers[startFrom];
+		int indexOfRightBracket = number.indexOf(')');
+		
+		if(indexOfRightBracket == -1 && startFrom < numbers.length) {
+			return getRightBracketIndex(numbers, startFrom + 1);
+		}
+		return startFrom;
 	}
 	
 	/**
@@ -268,14 +291,13 @@ public class Calculator implements ICalculator{
 	 * @param indexOfOperation index of the last executed operation.
 	 * @return the new symbols array without the last executed operation.
 	 */
-	public String[] reconstructSymbolsArray(String[] symbols, int indexOfOperation) {
+	public String[] reconstructSymbolsArray(String[] symbols, int indexOfOperation, int indexOfLastOperation) {
 		String[] left = Arrays.copyOfRange(symbols, 0, indexOfOperation);
-		String[] right = Arrays.copyOfRange(symbols, indexOfOperation + 1, symbols.length);
+		String[] right = Arrays.copyOfRange(symbols, indexOfLastOperation + 1, symbols.length);
 		String[] newArray = new String[left.length + right.length];
 		
 		System.arraycopy(left, 0, newArray, 0, left.length);
 		System.arraycopy(right, 0, newArray, left.length, right.length);
-		
 		return newArray;
 	}
 	
@@ -286,7 +308,7 @@ public class Calculator implements ICalculator{
 	 * @param numberToInsert number to insert into the new numbers array
 	 * @return the new numbers array without the numbers on the left and right side of the operation.
 	 */
-	public String[] reconstructNumbersArray(String[] numbers, int indexOfOperation, String numberToInsert) {
+	public String[] reconstructNumbersArray(String[] numbers, int indexOfOperation, int indexOfLastNumber ,String numberToInsert) {
 		
 		if(indexOfOperation + 1 >= numbers.length) { /*If the index of the number to insert is the right most position */
 			String[] left = Arrays.copyOfRange(numbers, 0, indexOfOperation);
@@ -300,7 +322,7 @@ public class Calculator implements ICalculator{
 		}
 		
 		String[] left = Arrays.copyOfRange(numbers, 0, indexOfOperation);
-		String[] right = Arrays.copyOfRange(numbers, indexOfOperation + 2, numbers.length);
+		String[] right = Arrays.copyOfRange(numbers, indexOfLastNumber + 1, numbers.length);
 		String[] newArray = new String[left.length + right.length + 1];
 		
 		System.arraycopy(left, 0, newArray, 0, left.length);
@@ -317,11 +339,17 @@ public class Calculator implements ICalculator{
 	 */
 	@Override
 	public double evaluate(String expression) {
-		double result = 0;
 		//System.out.println(expression);
+		double result = 0;
+		int indexOfFirstOperation = 0;
+		int indexOfLastOperation = 0;
+		int indexOfLastNumber = 0;
+		String symb = "";
+		String leftNum = "";
+		String rightNum = "";
+		
 		String[] nums = getNumbers(expression);
 		String[] symbols = getSymbols(expression);
-		
 		List<String> numsList = Arrays.asList(nums);
 		List<String> symbolsList = Arrays.asList(symbols);
 		replaceNegative(symbolsList, numsList );
@@ -329,20 +357,52 @@ public class Calculator implements ICalculator{
 		numsList.toArray(nums);
 		symbolsList.toArray(symbols);
 		
-		//for(String num: numsList) {
-			//System.out.print(num + " ");
-		//}
-		//System.out.print("\n");
-		//for(String sym: symbolsList) {
-			//System.out.print(sym + " ");
-		//}
+		if(!bracketsListSet) {
+			getLeftBracketIndices(nums, leftBrackets, nums.length - 1);
+			bracketsListSet = true;
+		}
 		
-		int indexOfFirstOperation = getIndexOfFirstOperation(symbols);
-		
-		String symb = symbols[indexOfFirstOperation];
-		String leftNum = nums[indexOfFirstOperation];
-		String rightNum = nums[indexOfFirstOperation + 1];
-		
+		if(leftBrackets.size() != 0 && !evaluatingBracket) {
+			indexOfFirstOperation = leftBrackets.get(0);
+			indexOfLastNumber = getRightBracketIndex(nums, indexOfFirstOperation);
+			indexOfLastOperation = indexOfLastNumber - 1;
+			
+				
+			if(indexOfFirstOperation == indexOfLastOperation) {
+				symb = symbols[indexOfFirstOperation];
+				String left = nums[indexOfFirstOperation];
+				String right = nums[indexOfLastNumber];
+				leftNum = left.substring(1);
+				rightNum = right.substring(0, right.length() - 1);
+				indexOfLastOperation = indexOfFirstOperation;
+				
+				leftBrackets.remove(0);
+			}
+			else {
+				evaluatingBracket = true;
+				String[] numbersInsideBracket = Arrays.copyOfRange(nums, indexOfFirstOperation, indexOfLastNumber + 1);
+				String[] symbolsInsideBracket = Arrays.copyOfRange(symbols, indexOfFirstOperation, indexOfLastOperation + 1);
+				
+				String left = numbersInsideBracket[0];
+				String right = numbersInsideBracket[numbersInsideBracket.length - 1];
+				numbersInsideBracket[0] = left.substring(1);
+				numbersInsideBracket[numbersInsideBracket.length - 1] = right.substring(0, right.length() - 1);
+				String expressionInsideBracket = reconstructExpression(symbolsInsideBracket, numbersInsideBracket);
+				result = evaluate(expressionInsideBracket);
+				symb = "";
+				evaluatingBracket = false;
+				leftBrackets.remove(0);
+			}
+		}
+		else {			
+			indexOfFirstOperation = getIndexOfFirstOperation(symbols);
+			indexOfLastOperation = indexOfFirstOperation;
+			indexOfLastNumber = indexOfFirstOperation + 1;
+			symb = symbols[indexOfFirstOperation];
+			leftNum = nums[indexOfFirstOperation];
+			rightNum = nums[indexOfLastNumber];
+		}
+
 		switch (symb) {
 		case "+":
 			result = add(leftNum, rightNum);
@@ -363,13 +423,11 @@ public class Calculator implements ICalculator{
 			result = pow(leftNum, rightNum);
 			break;
 		}
-		
+		String[] numbersArrayRemoveUsed = reconstructNumbersArray(nums, indexOfFirstOperation, indexOfLastNumber, Double.toString(result));
+		String[] symbolsArrayRemoveUsed = reconstructSymbolsArray(symbols, indexOfFirstOperation, indexOfLastOperation);
 		if(nums.length <= 1 || symbols.length <= 1) {
 			return result;
 		}	
-		
-		String[] numbersArrayRemoveUsed = reconstructNumbersArray(nums, indexOfFirstOperation, Double.toString(result));
-		String[] symbolsArrayRemoveUsed = reconstructSymbolsArray(symbols, indexOfFirstOperation);
 		
 		return evaluate( 
 				reconstructExpression(symbolsArrayRemoveUsed, numbersArrayRemoveUsed)
