@@ -10,33 +10,108 @@ public class Calculator implements ICalculator{
 	private final String symbolRegex = "[^()0-9\\.]+";
 	private final String numRegex = "[()0-9\\.]+";
 	private final String spaceRegex = "\\s";
+	private final double precision = 0.0000000000001;
 	
-	public Double add(String i, String j) {
+	/**
+	 * 
+	 * @param i is the left hand side number.
+	 * @param j is the right hand side number.
+	 * @return the sum of i and j.
+	 */
+	public double add(String i, String j) {
 		return Double.parseDouble(i) + Double.parseDouble(j);
 	}
-
-	public Double subtract(String i, String j) {
+	
+	/**
+	 * 
+	 * @param i is the left hand side number.
+	 * @param j is the right hand side number.
+	 * @return the difference of i and j.
+	 */
+	public double subtract(String i, String j) {
 		return Double.parseDouble(i) - Double.parseDouble(j);
 	}
-
-	public Double multiply(String i, String j) {
+	
+	/**
+	 * 
+	 * @param i is the left hand side number.
+	 * @param j is the right hand side number.
+	 * @return the product of i and j.
+	 */
+	public double multiply(String i, String j) {
 		return Double.parseDouble(i) * Double.parseDouble(j);
 	}
-
-	public Double divide(String i, String j) {
+	
+	/**
+	 * 
+	 * @param i is the left hand side number.
+	 * @param j is the right hand side number.
+	 * @return the quotient of i and j.
+	 */
+	public double divide(String i, String j) {
 		return Double.parseDouble(i) / Double.parseDouble(j);
 	}
 	
+	
+	public double pow(String base, String exponent) {
+		if(Double.parseDouble(exponent) == 0) {
+			return 1;
+		}
+		if(Double.parseDouble(exponent) < 0) {
+			return (1 / Double.parseDouble(base)) * pow(base, Double.toString(Double.parseDouble(exponent) + 1));
+		}
+		return Double.parseDouble(base) * pow(base, Double.toString(Double.parseDouble(exponent) - 1));
+	}
+	
+	
+	public double root(String base, String n, double approximate) {
+		
+		double baseDouble = Double.parseDouble(base);
+		double nDouble = Double.parseDouble(n);
+		
+		double result = baseDouble / pow(Double.toString(approximate), Double.toString( nDouble - 1));
+		double average = (approximate * (nDouble - 1) + result) / nDouble;
+		double diff = result - average;
+		
+		if(diff < 0) {
+			diff = -diff;
+		}
+		
+		if(diff < precision) {
+			return result;
+		}
+		
+		return root(base, n, average);
+	}
+	
+	public int decimalToWhole(String decimal) {
+		if(decimal.indexOf('.') == -1) {
+			return 1;
+		}
+		
+		return 10 * decimalToWhole(decimal);
+	}
+	
+	/**
+	 * 
+	 * @param expression contains numbers and symbols.
+	 * @return a String array, each element contains number and may have brackets.
+	 */
 	public String[] getNumbers(String expression) {
 		String stringWithoutSpace = expression.replaceAll(spaceRegex, "");
 		
-		if(stringWithoutSpace.indexOf('-') == 0) {
+		if(stringWithoutSpace.indexOf('-') == 0) { /*Check if expression starts with a negative number*/
 			String firstNegative = "-";
 			String withoutFirstNegative = stringWithoutSpace.substring(1);
 			
 			String [] numberArray = withoutFirstNegative.split(symbolRegex);
-			numberArray[0] = firstNegative + numberArray[0];
+			numberArray[0] = firstNegative + numberArray[0]; /*Replace the first element with the negative number*/
+			return numberArray;
+		}
+		else if(stringWithoutSpace.indexOf('+') == 0) {
+			String withoutFirstSymbols = stringWithoutSpace.substring(1);
 			
+			String [] numberArray = withoutFirstSymbols.split(symbolRegex);
 			return numberArray;
 		}
 		else {
@@ -45,16 +120,27 @@ public class Calculator implements ICalculator{
 		}
 	}
 	
+	/**
+	 * 
+	 * @param expression contains numbers and symbols.
+	 * @return a String array, each element contains only symbols.
+	 */
 	public String[] getSymbols(String expression) {
 		String stringWithoutSpace = expression.replaceAll(spaceRegex, "");
 		String[] numberArray = getNumbers(stringWithoutSpace);
-		int indexOfFirstSymbol = numberArray[0].length();
-		String fromFirstSymbol = stringWithoutSpace.substring(indexOfFirstSymbol);
+		int indexOfFirstSymbol = numberArray[0].length(); /*Get the index of when the first symbol appears */
+		String fromFirstSymbol = stringWithoutSpace.substring(indexOfFirstSymbol); /*Removes the first number*/
 		String [] symbolsArray = fromFirstSymbol.split(numRegex);
 		
 		return symbolsArray;
 	}
 	
+	/**
+	 * Recursively form the new expression.
+	 * @param symbols array containing all the valid symbols.
+	 * @param number array containing all the valid numbers.
+	 * @return expression containing all the symbols and numbers in the arrays.
+	 */
 	public String reconstructExpression(String[] symbols, String[] number) {
 		
 		if(number.length == 1 && symbols.length == 0) {
@@ -71,11 +157,18 @@ public class Calculator implements ICalculator{
 				);
 	}
 	
+	/**
+	 * Get the index of symbol base on order of operation.
+	 * @param symbols array containing all the valid symbols.
+	 * @return the index of the operation with the most priority.
+	 */
 	public int getIndexOfFirstOperation(String[] symbols) {
 		int indexOfAdd = Arrays.asList(symbols).indexOf("+");
 		int indexOfSub = Arrays.asList(symbols).indexOf("-");
 		int indexOfMul = Arrays.asList(symbols).indexOf("*");
 		int indexOfDiv = Arrays.asList(symbols).indexOf("/");
+		int indexOfPow = Arrays.asList(symbols).indexOf("**");
+		int indexOfExp = Arrays.asList(symbols).indexOf("^");
 		
 		if(indexOfMul < 0) {
 			indexOfMul = Integer.MAX_VALUE;
@@ -89,7 +182,19 @@ public class Calculator implements ICalculator{
 		if(indexOfSub < 0) {             
 			indexOfSub = Integer.MAX_VALUE;
 		}
+		if(indexOfPow < 0) {
+			indexOfPow = Integer.MAX_VALUE;
+		}
+		if(indexOfExp < 0) {
+			indexOfExp = Integer.MAX_VALUE;
+		}
 		
+		if(indexOfPow <= indexOfExp && indexOfPow != Integer.MAX_VALUE) {
+			return indexOfPow;
+		}
+		else if(indexOfExp < indexOfPow) {
+			return indexOfExp;
+		}
 		if(indexOfMul <= indexOfDiv && indexOfMul != Integer.MAX_VALUE) {
 			return indexOfMul;
 		}
@@ -107,6 +212,11 @@ public class Calculator implements ICalculator{
 		return 0;
 	}
 	
+	/**
+	 * Seek index of negative numbers and place them into the lists. Check if there are any left recursively.
+	 * @param symbols list containing all the valid symbols.
+	 * @param numbers list containing all the valid numbers.
+	 */
 	public void replaceNegative(List<String> symbols, List<String> numbers) {
 		int indexOfAddNeg = symbols.indexOf("+-");
 		int indexOfSubNeg = symbols.indexOf("--");
@@ -152,6 +262,12 @@ public class Calculator implements ICalculator{
 		}
 	}
 	
+	/**
+	 * 
+	 * @param symbols array containing all the valid symbols.
+	 * @param indexOfOperation index of the last executed operation.
+	 * @return the new symbols array without the last executed operation.
+	 */
 	public String[] reconstructSymbolsArray(String[] symbols, int indexOfOperation) {
 		String[] left = Arrays.copyOfRange(symbols, 0, indexOfOperation);
 		String[] right = Arrays.copyOfRange(symbols, indexOfOperation + 1, symbols.length);
@@ -163,9 +279,16 @@ public class Calculator implements ICalculator{
 		return newArray;
 	}
 	
+	/**
+	 * 
+	 * @param numbers array containing all the valid numbers.
+	 * @param indexOfOperation index of the last executed operation.
+	 * @param numberToInsert number to insert into the new numbers array
+	 * @return the new numbers array without the numbers on the left and right side of the operation.
+	 */
 	public String[] reconstructNumbersArray(String[] numbers, int indexOfOperation, String numberToInsert) {
 		
-		if(indexOfOperation + 1 >= numbers.length) {
+		if(indexOfOperation + 1 >= numbers.length) { /*If the index of the number to insert is the right most position */
 			String[] left = Arrays.copyOfRange(numbers, 0, indexOfOperation);
 			String[] newArray = new String[left.length + 1];
 			
@@ -188,9 +311,13 @@ public class Calculator implements ICalculator{
 		return newArray;
 	}
 	
+	/**
+	 * @param expression contains numbers and symbols.
+	 * @return result of all the executed operations.
+	 */
 	@Override
 	public double evaluate(String expression) {
-		double left = 0;
+		double result = 0;
 		//System.out.println(expression);
 		String[] nums = getNumbers(expression);
 		String[] symbols = getSymbols(expression);
@@ -218,24 +345,30 @@ public class Calculator implements ICalculator{
 		
 		switch (symb) {
 		case "+":
-			left = add(leftNum, rightNum);
+			result = add(leftNum, rightNum);
 			break;
 		case "-":
-			left = subtract(leftNum, rightNum);
+			result = subtract(leftNum, rightNum);
 			break;
 		case "*":
-			left = multiply(leftNum, rightNum);
+			result = multiply(leftNum, rightNum);
 			break;
 		case "/":
-			left = divide(leftNum, rightNum);
+			result = divide(leftNum, rightNum);
+			break;
+		case "**":
+			result = pow(leftNum, rightNum);
+			break;
+		case "^":
+			result = pow(leftNum, rightNum);
 			break;
 		}
 		
 		if(nums.length <= 1 || symbols.length <= 1) {
-			return left;
+			return result;
 		}	
 		
-		String[] numbersArrayRemoveUsed = reconstructNumbersArray(nums, indexOfFirstOperation, Double.toString(left));
+		String[] numbersArrayRemoveUsed = reconstructNumbersArray(nums, indexOfFirstOperation, Double.toString(result));
 		String[] symbolsArrayRemoveUsed = reconstructSymbolsArray(symbols, indexOfFirstOperation);
 		
 		return evaluate( 

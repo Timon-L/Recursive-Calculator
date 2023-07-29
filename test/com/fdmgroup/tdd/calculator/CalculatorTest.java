@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class CalculatorTest {
+	private final double precision = 0.0000000000001;
 	Calculator calc;
 	@BeforeEach
 	public void setup() {
@@ -203,42 +204,42 @@ class CalculatorTest {
 	}
 	
 	@Test
-	void evaluation_NumberIsPointTwo_3DivideBy15() {
+	void evaluation_ResultIsPointTwo_3DivideBy15() {
 		String expression = "3/15";
 		double expected = 0.2;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsOne_3DivideBy15Times5() {
+	void evaluation_ResultIsOne_3DivideBy15Times5() {
 		String expression = "3/15*5";
 		double expected = 1;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsPointOOTwo_3DivideBy100() {
+	void evaluation_ResultIsPointOOTwo_3DivideBy100() {
 		String expression = "3/15/100";
 		double expected = 0.002;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsTwo_3DivideBy100Time1000() {
+	void evaluation_ResultIsTwo_3DivideBy100Time1000() {
 		String expression = "3/15/100*1000";
 		double expected = 2;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsNegTwo_3DivideBy100Time1000Minus4() {
+	void evaluation_ResultIsNegTwo_3DivideBy100Time1000Minus4() {
 		String expression = "3/15/100*1000-4";
 		double expected = -2;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsTwo_4Minus3DivideBy100Time1000() {
+	void evaluation_ResultIsTwo_4Minus3DivideBy100Time1000() {
 		String expression = "4-3/15/100*1000";
 		double expected = 2;
 		assertEquals(expected, calc.evaluate(expression));
@@ -259,58 +260,157 @@ class CalculatorTest {
 	}
 	
 	@Test
-	void evaluation_NumberIsNegTwo_Neg3DivideBy100Time1000() {
+	void evaluation_ResultIsNegTwo_Neg3DivideBy100Time1000() {
 		String expression = "-3/15/100*1000";
 		double expected = -2;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsTwenty_TenMinusNegTen() {
+	void evaluation_ResultIsTwenty_TenMinusNegTen() {
 		String expression = "10--10";
 		double expected = 20;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsZero_TenMinusNegTenPlusNegTwenty() {
+	void evaluation_ResultIsZero_TenMinusNegTenPlusNegTwenty() {
 		String expression = "10--10+-20";
 		double expected = 0;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIs120_TenMinusNegTenPlusNeg10TimesNeg10() {
+	void evaluation_ResultIs120_TenMinusNegTenPlusNeg10TimesNeg10() {
 		String expression = "10--10+-10*-10";
 		double expected = 120;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsNeg30_TenMinusNegTenPlusNeg10TimesNeg10DivNeg2() {
+	void evaluation_ResultIsNeg30_TenMinusNegTenPlusNeg10TimesNeg10DivNeg2() {
 		String expression = "10--10+-10*-10/-2";
 		double expected = -30;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsNeg50_NegTenMinusNegTenPlusNeg10TimesNeg10DivNeg2() {
+	void evaluation_ResultIsNeg50_NegTenMinusNegTenPlusNeg10TimesNeg10DivNeg2() {
 		String expression = "-10--10+-10*-10/-2";
 		double expected = -50;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIs50_TenDivNegTwoTimesNegTenPlusNeg10MinusNeg10() {
+	void evaluation_ResultIs50_TenDivNegTwoTimesNegTenPlusNeg10MinusNeg10() {
 		String expression = "10/-2*-10+-10--10";
 		double expected = 50;
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
 	@Test
-	void evaluation_NumberIsNeg50_NegTenDivNegTwoTimesNegTenPlusNeg10MinusNeg10() {
+	void evaluation_ResultIsNeg50_NegTenDivNegTwoTimesNegTenPlusNeg10MinusNeg10() {
 		String expression = "-10/-2*-10+-10--10";
 		double expected = -50;
 		assertEquals(expected, calc.evaluate(expression));
 	}
+	
+	@Test
+	void pow_ResultIs8_2Pow3() {
+		String base = "2";
+		String exponent = "3";
+		double expected = 8;
+		assertEquals(expected, calc.pow(base, exponent));
+	}
+	
+	@Test
+	void pow_ResultIs2_2Pow1() {
+		String base = "2";
+		String exponent = "1";
+		double expected = 2;
+		assertEquals(expected, calc.pow(base, exponent));
+	}
+	
+	@Test
+	void pow_ResultIs1_2Pow0() {
+		String base = "2";
+		String exponent = "0";
+		double expected = 1;
+		assertEquals(expected, calc.pow(base, exponent));
+	}
+	
+	@Test
+	void pow_ResultIs1073741824_2Pow30() {
+		String base = "2";
+		String exponent = "30";
+		double expected = 1073741824;
+		assertEquals(expected, calc.pow(base, exponent));
+	}
+	
+	@Test
+	void pow_ResultIs0Point03125_2PowNeg5() {
+		String base = "2";
+		String exponent = "-5";
+		double expected = 0.03125;
+		assertEquals(expected, calc.pow(base, exponent), precision);
+	}
+	
+	@Test
+	void evaluate_ResultIs1073741824_2Pow30() {
+		String expression = "2**30";
+		double expected = 1073741824;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs1073741824_2Exp30() {
+		String expression = "2^30";
+		double expected = 1073741824;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs8_2Pow2Times2() {
+		String expression = "2**2*2";
+		double expected = 8;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs8_2Exp2Times2() {
+		String expression = "2^2*2";
+		double expected = 8;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs16_2Times2Pow3() {
+		String expression = "2*2**3";
+		double expected = 16;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIsNeg4_4Minus2Div2Times2Pow3() {
+		String expression = "4-2/2*2**3";
+		double expected = -4;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void root_ResultIs5Point1961524227066_SquareRoot27() {
+		String base = "27";
+		String n = "2";
+		double expected = 5.1961524227066;
+		assertEquals(expected, calc.root(base, n, 1), precision);
+	}
+	
+	@Test
+	void root_ResultIs1Point4028505520067_8thRoot15() {
+		String base = "15";
+		String n = "8";
+		double expected = 1.4028505520067;
+		assertEquals(expected, calc.root(base, n, 1), precision);
+	}
+
 }
