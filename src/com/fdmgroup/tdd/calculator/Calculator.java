@@ -333,18 +333,97 @@ public class Calculator implements ICalculator{
 		return newArray;
 	}
 	
+	public double calResult(String symbol, String left, String right) {
+		switch (symbol) {
+		case "+":
+			return add(left, right);
+		case "-":
+			return subtract(left, right);
+		case "*":
+			return multiply(left, right);
+		case "/":
+			return divide(left, right);
+		case "**":
+			return  pow(left, right);
+		case "^":
+			return pow(left, right);
+		default:
+			return 0.0;
+		}
+		
+	}
+	
+	public String getResultString(String symbol, String leftNum, String rightNum) {
+	
+		double result = 0;
+		String resultString = "";
+		String left = "";
+		String right = "";
+		boolean leftHasBracket = false;
+		boolean rightHasBracket = false;
+		int leftLeftBracket = leftNum.indexOf('(');
+		int leftRightBracket = leftNum.indexOf(')');
+		int rightLeftBracket = rightNum.indexOf('(');
+		int rightRightBracket = rightNum.indexOf(')');
+		
+		if(leftLeftBracket != -1 && leftRightBracket != -1) {
+			left = leftNum.substring(leftLeftBracket + 1, leftRightBracket);
+		}
+		else if(leftLeftBracket != -1) {
+			left = leftNum.substring(leftLeftBracket + 1);
+			leftHasBracket = true;
+		}
+		else if(leftRightBracket != -1) {
+			left = leftNum.substring(0, leftRightBracket);
+			leftHasBracket = true;
+		}
+		else {
+			left = leftNum;
+		}
+		
+		if(rightLeftBracket != -1 && rightRightBracket != -1) {
+			right = rightNum.substring(rightLeftBracket + 1, rightRightBracket);
+		}
+		else if(rightLeftBracket != -1) {
+			right = rightNum.substring(rightLeftBracket + 1);
+			rightHasBracket = true;
+		}
+		else if(rightRightBracket != -1) {
+			right = rightNum.substring(0, rightRightBracket);
+			rightHasBracket = true;
+		}
+		else {
+			right = rightNum;
+		}
+		
+		result = calResult(symbol, left, right);
+		
+		if(leftHasBracket) {
+			resultString += "(";
+		}
+		
+		resultString += Double.toString(result);
+		
+		if(rightHasBracket) {
+			resultString += ")";
+		}
+		
+		return resultString;
+	}
+	
 	/**
 	 * @param expression contains numbers and symbols.
 	 * @return result of all the executed operations.
 	 */
 	@Override
 	public double evaluate(String expression) {
-		//System.out.println(expression);
+		System.out.println(expression);
 		double result = 0;
+		String resultString = "";
 		int indexOfFirstOperation = 0;
 		int indexOfLastOperation = 0;
 		int indexOfLastNumber = 0;
-		String symb = "";
+		String symbol = "";
 		String leftNum = "";
 		String rightNum = "";
 		
@@ -363,19 +442,18 @@ public class Calculator implements ICalculator{
 		}
 		
 		if(leftBrackets.size() != 0 && !evaluatingBracket) {
+			
 			indexOfFirstOperation = leftBrackets.get(0);
-			indexOfLastNumber = getRightBracketIndex(nums, indexOfFirstOperation);
+			indexOfLastNumber = getRightBracketIndex(nums, indexOfFirstOperation + 1);
 			indexOfLastOperation = indexOfLastNumber - 1;
 			
-				
 			if(indexOfFirstOperation == indexOfLastOperation) {
-				symb = symbols[indexOfFirstOperation];
+				symbol = symbols[indexOfFirstOperation];
 				String left = nums[indexOfFirstOperation];
 				String right = nums[indexOfLastNumber];
 				leftNum = left.substring(1);
 				rightNum = right.substring(0, right.length() - 1);
 				indexOfLastOperation = indexOfFirstOperation;
-				
 				leftBrackets.remove(0);
 			}
 			else {
@@ -389,8 +467,10 @@ public class Calculator implements ICalculator{
 				numbersInsideBracket[numbersInsideBracket.length - 1] = right.substring(0, right.length() - 1);
 				String expressionInsideBracket = reconstructExpression(symbolsInsideBracket, numbersInsideBracket);
 				result = evaluate(expressionInsideBracket);
-				symb = "";
+				resultString = Double.toString(result);
+				symbol = "";
 				evaluatingBracket = false;
+				
 				leftBrackets.remove(0);
 			}
 		}
@@ -398,35 +478,20 @@ public class Calculator implements ICalculator{
 			indexOfFirstOperation = getIndexOfFirstOperation(symbols);
 			indexOfLastOperation = indexOfFirstOperation;
 			indexOfLastNumber = indexOfFirstOperation + 1;
-			symb = symbols[indexOfFirstOperation];
+			symbol = symbols[indexOfFirstOperation];
 			leftNum = nums[indexOfFirstOperation];
 			rightNum = nums[indexOfLastNumber];
 		}
-
-		switch (symb) {
-		case "+":
-			result = add(leftNum, rightNum);
-			break;
-		case "-":
-			result = subtract(leftNum, rightNum);
-			break;
-		case "*":
-			result = multiply(leftNum, rightNum);
-			break;
-		case "/":
-			result = divide(leftNum, rightNum);
-			break;
-		case "**":
-			result = pow(leftNum, rightNum);
-			break;
-		case "^":
-			result = pow(leftNum, rightNum);
-			break;
+		
+		if(!symbol.equals("")) {
+			resultString = getResultString(symbol, leftNum, rightNum);
 		}
-		String[] numbersArrayRemoveUsed = reconstructNumbersArray(nums, indexOfFirstOperation, indexOfLastNumber, Double.toString(result));
+		
+		String[] numbersArrayRemoveUsed = reconstructNumbersArray(nums, indexOfFirstOperation, indexOfLastNumber, resultString);
 		String[] symbolsArrayRemoveUsed = reconstructSymbolsArray(symbols, indexOfFirstOperation, indexOfLastOperation);
-		if(nums.length <= 1 || symbols.length <= 1) {
-			return result;
+		
+		if(numbersArrayRemoveUsed.length <= 1 || symbolsArrayRemoveUsed.length <= 0) {
+			return Double.parseDouble(resultString);
 		}	
 		
 		return evaluate( 

@@ -494,4 +494,18 @@ class CalculatorTest {
 		double expected = 256;
 		assertEquals(expected, calc.evaluate(expression));
 	}
+	
+	@Test
+	void evaluate_ResultIs32_Bracket2TimesBracket2PlusBracket3TimesTwoBracketBracketTimesBracket10Div5BracketBracket() {
+		String expression = "(2*(2+(3*2))*(10/5))";
+		double expected = 32;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs32_Bracket2TimesBracket2PlusBracketBracket3BracketTimesTwoBracketBracketTimesBracket10Div5BracketBracket() {
+		String expression = "(2*(2+((3)*2))*(10/5))";
+		double expected = 32;
+		assertEquals(expected, calc.evaluate(expression));
+	}
 }
