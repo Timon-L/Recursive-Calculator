@@ -523,7 +523,6 @@ class CalculatorTest {
 		assertEquals(expected, calc.evaluate(expression));
 	}
 	
-
 	@Test
 	void evaluate_ResultIs7_LBKT_1Plus_LBKT_LBKT_3Plus2_RBKT_Times_LBKT_2_RBKT_RBKT_RBKT() {
 		String expression = "(1+((3+2)*(2)))";
@@ -660,6 +659,13 @@ class CalculatorTest {
 	}
 	
 	@Test
+	void evaluate_ResultIs12_2_Minus_LBKT_Neg10_RBKT_Times2() {
+		String expression = "2-(-10)";
+		double expected = 12;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
 	void cleanBrackets_EqualsExpected_whenNumberListIsPassedIn() {
 		List<String> numbers = new ArrayList<String>();
 		numbers.add("-(-10)");
@@ -677,5 +683,50 @@ class CalculatorTest {
 		String base = "3";
 		double expected = 2.19179986693;
 		assertEquals(expected, calc.fractionalPow(base, exponent), 0.001);
+	}
+	
+	@Test
+	void frationalPow_EqualsNeg2Point19_baseIsNeg3ExponentIs5Over7() {
+		String exponent = "0.71428571428";
+		String base = "-3";
+		double expected = -2.19179986693;
+		assertEquals(expected, calc.fractionalPow(base, exponent), 0.001);
+	}
+	
+	@Test
+	void evaluate_ResultIs16_2Pow2Pow2() {
+		String expression = "2**2**2";
+		double expected = 16;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs256_2Pow2Pow3() {
+		String expression = "2**2**3";
+		double expected = 256;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIsExpected_WhenExpression() {
+		String expression = "+((-10)++(2))**-2.1-+(10**+(2))^+2.5--(-10)^+2.5^-2.0";
+		double expected = -100001.45813121444;
+		assertEquals(expected, calc.evaluate(expression), 0.001);
+	}
+	
+	@Test
+	void getResultString_ResultIs2_WhenLeftNumIsEnclosedInBracketsAndRightNumIsEnclosedInBrackets() {
+		String leftNum = "((1))";
+		String rightNum = "((1))";
+		String symbol = "+";
+		assertEquals("2.0", calc.getResultString(symbol, leftNum, rightNum));
+	}
+	
+	@Test
+	void getResultString_ResultIs2_WhenLeftNumHasOnlyRightBracketssAndRightNumHasOnlyLeftBrackets() {
+		String leftNum = "1))";
+		String rightNum = "((1";
+		String symbol = "+";
+		assertEquals("2.0", calc.getResultString(symbol, leftNum, rightNum));
 	}
 }

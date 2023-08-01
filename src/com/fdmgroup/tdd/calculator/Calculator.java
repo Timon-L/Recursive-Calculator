@@ -56,8 +56,8 @@ public class Calculator implements ICalculator{
 	
 	/**
 	 * Calculate the base raised to exponent.
-	 * @param base 
-	 * @param exponent
+	 * @param base.
+	 * @param exponent.
 	 * @return the base raised to exponent.
 	 */
 	public double pow(String base, String exponent) {
@@ -72,9 +72,9 @@ public class Calculator implements ICalculator{
 	
 	/**
 	 * 
-	 * @param base 
+	 * @param base.
 	 * @param n is the nth root.
-	 * @param approximate 
+	 * @param approximate is a guess on the actual root of base.
 	 * @return root of base to the nth degree.
 	 */
 	public double root(String base, String n, double approximate) {
@@ -97,9 +97,15 @@ public class Calculator implements ICalculator{
 		return root(base, n, average);
 	}
 	
+	/**
+	 * Transform decimal into fraction.
+	 * @param decimal is the decimal for fraction.
+	 * @return a string containing the numerator and denominator as a fraction.
+	 */
 	public String decimalToFraction(String decimal) {
 		String ten = "10";
 		int decimalPlaces = decimal.length() - decimal.indexOf('.') - 1;
+		
 		if(decimalPlaces > 3) {
 			decimalPlaces = 3;
 		}
@@ -115,6 +121,12 @@ public class Calculator implements ICalculator{
 		return numerator + "/" + denominator;
 	}
 	
+	/**
+	 * Find the greatest common divisor of numerator and denominator.
+	 * @param numerator.
+	 * @param denominator.
+	 * @return the greatest common divisor.
+	 */
 	public long getCommonDivisor(long numerator, long denominator) {
 		if(denominator == 0) {
 			return numerator;
@@ -122,8 +134,13 @@ public class Calculator implements ICalculator{
 		return getCommonDivisor(denominator, numerator % denominator);
 	}
 	
+	/**
+	 * Find the fractional exponent of base raised to the exponent.
+	 * @param base.
+	 * @param exponent.
+	 * @return the fractional exponent of base.
+	 */
 	public double fractionalPow(String base, String exponent) {
-		
 		String result = "";
 		String baseWithoutNegative = "";
 		int sign = 1;
@@ -154,6 +171,94 @@ public class Calculator implements ICalculator{
 	}
 	
 	/**
+	 * Calculate a result based on operator and 2 numbers.
+	 * @param symbol is the operator.
+	 * @param left is the left hand number.
+	 * @param right is the right hand number.
+	 * @return the result from calculator.
+	 */
+	public double calResult(String symbol, String left, String right) {
+		
+		switch (symbol) {
+		case "+":
+			return add(left, right);
+		case "-":
+			return subtract(left, right);
+		case "*":
+			return multiply(left, right);
+		case "/":
+			return divide(left, right);
+		case "**":
+			return fractionalPow(left, right);
+		case "^":
+			return fractionalPow(left, right);
+		default:
+			return 0.0;
+		}
+	}
+	
+	/**
+	 * Strip and brackets from numbers, add them back if the number is not entirely enclosed in brackets.
+	 * @param symbol is the operator for the calculator.
+	 * @param leftNum is the left hand number.
+	 * @param rightNum is the right hand number.
+	 * @return a string of result with any valid bracket remaining.
+	 */
+	public String getResultString(String symbol, String leftNum, String rightNum) {
+		double result = 0;
+		String resultString = "";
+		String leftWithoutBracket = "";
+		String rightWithoutBracket = "";
+		
+		int lLeftBracket = leftNum.lastIndexOf('(');
+		int lRightBracket = leftNum.indexOf(')');
+		int rLeftBracket = rightNum.lastIndexOf('(');
+		int rRightBracket = rightNum.indexOf(')');
+		
+		if(lLeftBracket != -1 && lRightBracket != -1) { /*Strip all left number bracket.*/
+			leftWithoutBracket = leftNum.substring(lLeftBracket + 1, lRightBracket);
+		}
+		else if(lLeftBracket != -1) { /*Strip one left hand bracket. */
+			leftWithoutBracket = leftNum.substring(lLeftBracket + 1);
+		}
+		else if(lRightBracket != -1) { /*Discard all right hand bracket. */
+			leftWithoutBracket = leftNum.substring(0, lRightBracket);
+		}
+		else {
+			leftWithoutBracket = leftNum;
+		}
+		
+		if(rLeftBracket != -1 && rRightBracket != -1) { /*Strip all right number bracket.*/
+			rightWithoutBracket = rightNum.substring(rLeftBracket + 1, rRightBracket);
+		}
+		else if(rLeftBracket != -1) {
+			rightWithoutBracket = rightNum.substring(rLeftBracket + 1);
+		}
+		else if(rRightBracket != -1) {
+			rightWithoutBracket = rightNum.substring(0, rRightBracket);
+		}
+		else {
+			rightWithoutBracket = rightNum;
+		}
+		
+		result = calResult(symbol, leftWithoutBracket, rightWithoutBracket);
+		int[] bracketCount = getRemainingBracketCount(leftNum, rightNum); /*Array = lLeft, rRight */
+		
+		
+		if(bracketCount[0] > 0) { /*Attach remaining brackets back into number */	
+			resultString += leftNum.substring(0, bracketCount[0]);		
+		}
+		
+		resultString += Double.toString(result);
+		
+		if(bracketCount[1] > 0) {
+			resultString += rightNum.substring(rRightBracket, rRightBracket + bracketCount[1]);			
+		}
+		
+		return resultString;
+	}
+	
+	/**
 	 * Sort the expression into a numbers array.
 	 * @param expression contains numbers and symbols.
 	 * @return a String array, each element contains number and may have brackets.
@@ -162,17 +267,16 @@ public class Calculator implements ICalculator{
 		String stringWithoutSpace = expression.replaceAll(spaceRegex, "");
 		
 		if(stringWithoutSpace.indexOf('-') == 0) { /*Check if expression starts with a negative number*/
-			String firstNegative = "-";
 			String withoutFirstNegative = stringWithoutSpace.substring(1);
 			
 			String [] numberArray = withoutFirstNegative.split(symbolRegex);
-			numberArray[0] = firstNegative + numberArray[0]; /*Replace the first element with the negative number*/
+			numberArray[0] = "-" + numberArray[0]; /*Replace the first element with the negative number*/
 			return numberArray;
 		}
 		else if(stringWithoutSpace.indexOf('+') == 0) {
 			String withoutFirstSymbols = stringWithoutSpace.substring(1);
-			
 			String [] numberArray = withoutFirstSymbols.split(symbolRegex);
+			numberArray[0] = "+" + numberArray[0];
 			return numberArray;
 		}
 		else {
@@ -231,28 +335,6 @@ public class Calculator implements ICalculator{
 	}
 	
 	/**
-	 * Recursively form the new expression.
-	 * @param symbols array containing all the valid symbols.
-	 * @param number array containing all the valid numbers.
-	 * @return expression containing all the symbols and numbers in the arrays.
-	 */
-	public String reconstructExpression(String[] symbols, String[] number) {
-		
-		if(number.length == 1 && symbols.length == 0) {
-			return number[0];
-		}
-		else if(symbols.length == 1 && number.length == 1) {
-			return symbols[0] + number[0];
-		}
-		return number[0] +
-				symbols[0] +
-				reconstructExpression(
-						Arrays.copyOfRange(symbols, 1, symbols.length), 
-						Arrays.copyOfRange(number, 1, number.length)
-				);
-	}
-	
-	/**
 	 * Get the index of symbol base on order of operation.
 	 * @param symbols array containing all the valid symbols.
 	 * @return the index of the operation with the most priority.
@@ -262,8 +344,8 @@ public class Calculator implements ICalculator{
 		int indexOfSub = Arrays.asList(symbols).indexOf("-");
 		int indexOfMul = Arrays.asList(symbols).indexOf("*");
 		int indexOfDiv = Arrays.asList(symbols).indexOf("/");
-		int indexOfPow = Arrays.asList(symbols).indexOf("**");
-		int indexOfExp = Arrays.asList(symbols).indexOf("^");
+		int indexOfPow = Arrays.asList(symbols).lastIndexOf("**");
+		int indexOfExp = Arrays.asList(symbols).lastIndexOf("^");
 		
 		if(indexOfMul < 0) {
 			indexOfMul = Integer.MAX_VALUE;
@@ -277,17 +359,11 @@ public class Calculator implements ICalculator{
 		if(indexOfSub < 0) {             
 			indexOfSub = Integer.MAX_VALUE;
 		}
-		if(indexOfPow < 0) {
-			indexOfPow = Integer.MAX_VALUE;
-		}
-		if(indexOfExp < 0) {
-			indexOfExp = Integer.MAX_VALUE;
-		}
 		
-		if(indexOfPow <= indexOfExp && indexOfPow != Integer.MAX_VALUE) {
+		if(indexOfPow >= indexOfExp && indexOfPow != -1) {
 			return indexOfPow;
 		}
-		else if(indexOfExp < indexOfPow) {
+		else if(indexOfExp > indexOfPow && indexOfExp != -1) {
 			return indexOfExp;
 		}
 		if(indexOfMul <= indexOfDiv && indexOfMul != Integer.MAX_VALUE) {
@@ -401,8 +477,15 @@ public class Calculator implements ICalculator{
 		}
 	}	
 	
+	/**
+	 * Append any brackets inside numbers without a number to the next closest neighbor. Attach symbols in-between the brackets and number.
+	 * @param symbols is the list containing symbols.
+	 * @param numbers is the list containing numbers.
+	 * @param index is the index of the current number.
+	 */
 	public void sortBracketsAndSymbols(List<String> symbols, List<String> numbers, int index) {
 		boolean hasNumber = numbers.get(index).matches(".*[0-9].*");
+		
 		if(!hasNumber) {
 			numbers.set(index, numbers.get(index) + symbols.get(index) + numbers.get(index + 1));
 			numbers.remove(index + 1);
@@ -413,6 +496,11 @@ public class Calculator implements ICalculator{
 		}
 	}
 	
+	/**
+	 * Remove pair of brackets that are closed within the current number term itself.
+	 * @param numbers is the list containing all the numbers.
+	 * @param index is the index of the current number.
+	 */
 	public void cleanBrackets(List<String> numbers, int index) {
 		String number = numbers.get(index);
 		int indexOfFirstLeftBracket = number.indexOf('(');
@@ -426,7 +514,7 @@ public class Calculator implements ICalculator{
 		String numberAfterCleaning = "";
 		
 		if(indexOfFirstLeftBracket != -1) {
-			if(indexOfFirstLeftBracket != 0 && number.charAt(0) == '-') {				
+			if(indexOfFirstLeftBracket != 0 && number.charAt(0) == '-') {	
 				signBeforeBracket = -1;
 			}
 			if(indexOfLastLeftBracket != -1) {
@@ -477,79 +565,11 @@ public class Calculator implements ICalculator{
 	}
 	
 	/**
-	 * 
-	 * @param symbols array containing all the valid symbols.
-	 * @param indexOfOperation index of the last executed operation.
-	 * @return the new symbols array without the last executed operation.
+	 * Count the brackets that are left after removing closed brackets within the leftNum to the rightNum.
+	 * @param leftNum is the left number.
+	 * @param rightNum is the right number.
+	 * @return the count of brackets left in left number and right number, int[] brackets = {left number remaining bracket, right number remaining bracket}.
 	 */
-	public String[] reconstructSymbolsArray(String[] symbols, int indexOfOperation, int indexOfLastOperation) {
-		String[] left = Arrays.copyOfRange(symbols, 0, indexOfOperation);
-		String[] right = Arrays.copyOfRange(symbols, indexOfLastOperation + 1, symbols.length);
-		String[] newArray = new String[left.length + right.length];
-		
-		System.arraycopy(left, 0, newArray, 0, left.length);
-		System.arraycopy(right, 0, newArray, left.length, right.length);
-		return newArray;
-	}
-	
-	/**
-	 * 
-	 * @param numbers array containing all the valid numbers.
-	 * @param indexOfOperation index of the last executed operation.
-	 * @param numberToInsert number to insert into the new numbers array
-	 * @return the new numbers array without the numbers on the left and right side of the operation.
-	 */
-	public String[] reconstructNumbersArray(String[] numbers, int indexOfOperation, int indexOfLastNumber ,String numberToInsert) {
-		
-		if(indexOfOperation + 1 >= numbers.length) { /*If the index of the number to insert is the right most position */
-			String[] left = Arrays.copyOfRange(numbers, 0, indexOfOperation);
-			String[] newArray = new String[left.length + 1];
-			
-			System.arraycopy(left, 0, newArray, 0, left.length);
-			
-			newArray[left.length] = numberToInsert;
-			
-			return newArray;
-		}
-		
-		String[] left = Arrays.copyOfRange(numbers, 0, indexOfOperation);
-		String[] right = Arrays.copyOfRange(numbers, indexOfLastNumber + 1, numbers.length);
-		String[] newArray = new String[left.length + right.length + 1];
-		
-		System.arraycopy(left, 0, newArray, 0, left.length);
-		System.arraycopy(right, 0, newArray, left.length + 1, right.length);
-		
-		newArray[left.length] = numberToInsert;
-		
-		return newArray;
-	}
-	
-	/**
-	 * Calculate a result based on operator and 2 numbers.
-	 * @param symbol is the operator.
-	 * @param left is the left hand number.
-	 * @param right is the right hand number.
-	 * @return the result from calculator.
-	 */
-	public double calResult(String symbol, String left, String right) {
-		switch (symbol) {
-		case "+":
-			return add(left, right);
-		case "-":
-			return subtract(left, right);
-		case "*":
-			return multiply(left, right);
-		case "/":
-			return divide(left, right);
-		case "**":
-			return  pow(left, right);
-		case "^":
-			return pow(left, right);
-		default:
-			return 0.0;
-		}
-	}
-	
 	public int[] getRemainingBracketCount(String leftNum, String rightNum) {
 		int lLeftBracketIndex = leftNum.lastIndexOf('(');
 		int lRightBracketIndex = leftNum.indexOf(')');
@@ -597,65 +617,74 @@ public class Calculator implements ICalculator{
 	}
 	
 	/**
-	 * Strip and brackets from numbers, add them back if the number is not entirely enclosed in brackets.
-	 * @param symbol is the operator for the calculator.
-	 * @param leftNum is the left hand number.
-	 * @param rightNum is the right hand number.
-	 * @return a string of result with any valid bracket remaining.
+	 * 
+	 * @param symbols array containing all the valid symbols.
+	 * @param indexOfOperation index of the last executed operation.
+	 * @return the new symbols array without the last executed operation.
 	 */
-	public String getResultString(String symbol, String leftNum, String rightNum) {
-		//System.out.println(leftNum + ":" + rightNum);
-		double result = 0;
-		String resultString = "";
-		String leftWithoutBracket = "";
-		String rightWithoutBracket = "";
+	public String[] reconstructSymbolsArray(String[] symbols, int indexOfOperation, int indexOfLastOperation) {
+		String[] left = Arrays.copyOfRange(symbols, 0, indexOfOperation);
+		String[] right = Arrays.copyOfRange(symbols, indexOfLastOperation + 1, symbols.length);
+		String[] newArray = new String[left.length + right.length];
 		
-		int lLeftBracket = leftNum.lastIndexOf('(');
-		int lRightBracket = leftNum.indexOf(')');
-		int rLeftBracket = rightNum.lastIndexOf('(');
-		int rRightBracket = rightNum.indexOf(')');
+		System.arraycopy(left, 0, newArray, 0, left.length);
+		System.arraycopy(right, 0, newArray, left.length, right.length);
 		
-		if(lLeftBracket != -1 && lRightBracket != -1) { /*Strip all left number bracket.*/
-			leftWithoutBracket = leftNum.substring(lLeftBracket + 1, lRightBracket);
-		}
-		else if(lLeftBracket != -1) { /*Strip one left hand bracket. */
-			leftWithoutBracket = leftNum.substring(lLeftBracket + 1);
-		}
-		else if(lRightBracket != -1) { /*Discard all right hand bracket. */
-			leftWithoutBracket = leftNum.substring(0, lRightBracket);
-		}
-		else {
-			leftWithoutBracket = leftNum;
-		}
+		return newArray;
+	}
+	
+	/**
+	 * 
+	 * @param numbers array containing all the valid numbers.
+	 * @param indexOfOperation index of the last executed operation.
+	 * @param numberToInsert number to insert into the new numbers array
+	 * @return the new numbers array without the numbers on the left and right side of the operation.
+	 */
+	public String[] reconstructNumbersArray(String[] numbers, int indexOfOperation, int indexOfLastNumber ,String numberToInsert) {
 		
-		if(rLeftBracket != -1 && rRightBracket != -1) { /*Strip all right number bracket.*/
-			rightWithoutBracket = rightNum.substring(rLeftBracket + 1, rRightBracket);
-		}
-		else if(rLeftBracket != -1) {
-			rightWithoutBracket = rightNum.substring(rLeftBracket + 1);
-		}
-		else if(rRightBracket != -1) {
-			rightWithoutBracket = rightNum.substring(0, rRightBracket);
-		}
-		else {
-			rightWithoutBracket = rightNum;
+		if(indexOfOperation + 1 >= numbers.length) { /*If the index of the number to insert is the right most position */
+			String[] left = Arrays.copyOfRange(numbers, 0, indexOfOperation);
+			String[] newArray = new String[left.length + 1];
+			
+			System.arraycopy(left, 0, newArray, 0, left.length);
+			
+			newArray[left.length] = numberToInsert;
+			
+			return newArray;
 		}
 		
-		result = calResult(symbol, leftWithoutBracket, rightWithoutBracket);
-		int[] bracketCount = getRemainingBracketCount(leftNum, rightNum); /*Array = lLeft, rRight */
+		String[] left = Arrays.copyOfRange(numbers, 0, indexOfOperation);
+		String[] right = Arrays.copyOfRange(numbers, indexOfLastNumber + 1, numbers.length);
+		String[] newArray = new String[left.length + right.length + 1];
 		
+		System.arraycopy(left, 0, newArray, 0, left.length);
+		System.arraycopy(right, 0, newArray, left.length + 1, right.length);
 		
-		if(bracketCount[0] > 0) { /*Attach remaining brackets back into number */	
-			resultString += leftNum.substring(0, bracketCount[0]);		
+		newArray[left.length] = numberToInsert;
+		
+		return newArray;
+	}
+	
+	/**
+	 * Recursively form the new expression.
+	 * @param symbols array containing all the valid symbols.
+	 * @param number array containing all the valid numbers.
+	 * @return expression containing all the symbols and numbers in the arrays.
+	 */
+	public String reconstructExpression(String[] symbols, String[] number) {
+		
+		if(number.length == 1 && symbols.length == 0) {
+			return number[0];
 		}
-		
-		resultString += Double.toString(result);
-		
-		if(bracketCount[1] > 0) {
-			resultString += rightNum.substring(rRightBracket, rRightBracket + bracketCount[1]);			
+		else if(symbols.length == 1 && number.length == 1) {
+			return symbols[0] + number[0];
 		}
-		System.out.println(resultString);
-		return resultString;
+		return number[0] +
+				symbols[0] +
+				reconstructExpression(
+						Arrays.copyOfRange(symbols, 1, symbols.length), 
+						Arrays.copyOfRange(number, 1, number.length)
+				);
 	}
 	
 	/**
@@ -664,6 +693,7 @@ public class Calculator implements ICalculator{
 	 */
 	@Override
 	public double evaluate(String expression) {
+		//System.out.println(expression);
 		double result = 0;
 		String resultString = "";
 		int indexOfFirstOperation = 0;
@@ -679,7 +709,6 @@ public class Calculator implements ICalculator{
 		List<String> symbolsList = new LinkedList<String> (Arrays.asList(symbols));
 		replaceNegative(symbolsList, numsList);
 		replacePositive(symbolsList, numsList);
-		
 		sortBracketsAndSymbols(symbolsList, numsList, 0);
 		cleanBrackets(numsList, 0);
 		String[] cleanedNums = new String[numsList.size()];
@@ -700,10 +729,6 @@ public class Calculator implements ICalculator{
 		if(leftBrackets.size() != 0 && !evaluatingBracket) {
 			
 			indexOfFirstOperation = leftBrackets.get(0);
-			if(indexOfFirstOperation + 1 >= cleanedNums.length) { /*If left bracket is the last element, move on to the next one.*/
-				leftBrackets.remove(0);
-				indexOfFirstOperation = leftBrackets.get(0);
-			}
 			indexOfLastNumber = getRightBracketIndex(cleanedNums, indexOfFirstOperation + 1);
 			indexOfLastOperation = indexOfLastNumber - 1;
 			
