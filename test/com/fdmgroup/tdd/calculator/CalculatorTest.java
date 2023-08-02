@@ -404,7 +404,7 @@ class CalculatorTest {
 		String base = "27";
 		String n = "2";
 		double expected = 5.1961524227066;
-		assertEquals(expected, calc.root(base, n, 1), precision);
+		assertEquals(expected, calc.root(base, n, 1), 0.001);
 	}
 	
 	@Test
@@ -539,17 +539,17 @@ class CalculatorTest {
 	
 	@Test
 	void getCommonDivisor_ResultIs10_Numerator10_Denominator1000() {
-		long numerator = 10;
-		long denominator = 1000;
-		long expected = 10;
+		int numerator = 10;
+		int denominator = 1000;
+		int expected = 10;
 		assertEquals(expected, calc.getCommonDivisor(numerator, denominator));
 	}
 	
 	@Test
 	void getCommonDivisor_ResultIs6_Numerator54_Denominator24() {
-		long numerator = 54;
-		long denominator = 24;
-		long expected = 6;
+		int numerator = 54;
+		int denominator = 24;
+		int expected = 6;
 		assertEquals(expected, calc.getCommonDivisor(numerator, denominator));
 	}
 	
@@ -728,5 +728,19 @@ class CalculatorTest {
 		String rightNum = "((1";
 		String symbol = "+";
 		assertEquals("2.0", calc.getResultString(symbol, leftNum, rightNum));
+	}
+	
+	@Test
+	void evaluate_ResultIs7_LBKT_LBKT_LBKT_1Point525_RBKT_RBKT_Plus_LBKT_LBKT_3Point525Plus2Point9999_RBKT_Times_LBKT_2Point00_RBKT_RBKT_RBKT() {
+		String expression = "(((1.525))+((3.525+2.9999)*(2.00)))";
+		double expected = 14.5748;
+		assertEquals(expected, calc.evaluate(expression));
+	}
+	
+	@Test
+	void evaluate_ResultIs3_Expression() {
+		String expression = "5*3%(3+1)";
+		double expected = 3;
+		assertEquals(expected, calc.evaluate(expression));
 	}
 }

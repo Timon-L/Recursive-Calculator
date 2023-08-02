@@ -14,6 +14,10 @@ public class Calculator implements ICalculator{
 	private boolean bracketsListSet = false;
 	private boolean evaluatingBracket = false;
 	
+	public double modulus(String i, String j) {
+		return Double.parseDouble(i) % Double.parseDouble(j);
+	}
+	
 	/**
 	 * 
 	 * @param i is the left hand side number.
@@ -80,10 +84,10 @@ public class Calculator implements ICalculator{
 	public double root(String base, String n, double approximate) {
 		
 		double baseDouble = Double.parseDouble(base);
-		double nDouble = Double.parseDouble(n);
+		double nDoubleMinusOne = Double.parseDouble(n) - 1;
 		
-		double result = baseDouble / pow(Double.toString(approximate), Double.toString( nDouble - 1));
-		double average = (approximate * (nDouble - 1) + result) / nDouble;
+		double result = baseDouble / pow(Double.toString(approximate), Double.toString(nDoubleMinusOne));
+		double average = (approximate * nDoubleMinusOne + result) / (nDoubleMinusOne + 1);
 		double diff = result - average;
 		
 		if(diff < 0) {
@@ -111,9 +115,9 @@ public class Calculator implements ICalculator{
 		}
 		String decimalPlacesString = Integer.toString(decimalPlaces);
 		
-		long numerator = (long) (Double.parseDouble(decimal) * pow(ten, decimalPlacesString));
-		long denominator = (long) pow(ten, decimalPlacesString);
-		long commonDivisor = getCommonDivisor(numerator, denominator);
+		int numerator = (int) (Double.parseDouble(decimal) * pow(ten, decimalPlacesString));
+		int denominator = (int) pow(ten, decimalPlacesString);
+		int commonDivisor = getCommonDivisor(numerator, denominator);
 		
 		numerator /= commonDivisor;
 		denominator /= commonDivisor;
@@ -127,7 +131,7 @@ public class Calculator implements ICalculator{
 	 * @param denominator.
 	 * @return the greatest common divisor.
 	 */
-	public long getCommonDivisor(long numerator, long denominator) {
+	public int getCommonDivisor(int numerator, int denominator) {
 		if(denominator == 0) {
 			return numerator;
 		}
@@ -192,6 +196,8 @@ public class Calculator implements ICalculator{
 			return fractionalPow(left, right);
 		case "^":
 			return fractionalPow(left, right);
+		case "%":
+			return modulus(left, right);
 		default:
 			return 0.0;
 		}
